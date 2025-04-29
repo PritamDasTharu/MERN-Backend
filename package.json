@@ -17,6 +17,7 @@
     "mongoos": "^0.0.1-security",
     "mongoose": "^8.10.0",
     "nodemon": "^3.1.9",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "uuidv1": "^1.6.14"
   }
 }

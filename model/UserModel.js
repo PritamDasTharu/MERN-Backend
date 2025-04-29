@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const uuid = require("uuidv1");
+const uuidv1 = require("uuidv1");
 
 const UserSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true },
+    name: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     hashed_password: { type: String, required: true },
     role: { type: Number, default: 0 },
@@ -14,12 +14,10 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-UserSchema.virtual("password");
-
-.set(function(password) {
+UserSchema.virtual("password").set(function (password) {
   this._password = password;
   this.salt = uuidv1();
-  this.hashed_password = this.encryptedPassword();
+  this.hashed_password = this.encryptedPassword(this._password);
 });
 
 UserSchema.methods = {
@@ -36,8 +34,8 @@ UserSchema.methods = {
       return null;
     }
   },
-  authenticate:function(password){
+  authenticate: function (password) {
     return this.hashed_password == this.encryptedPassword(password);
-  }
+  },
 };
 module.exports = mongoose.model("User", UserSchema);
