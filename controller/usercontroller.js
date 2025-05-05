@@ -75,3 +75,30 @@ exports.verifyuser = async (req, res) => {
   }
   return res.status(200).json({ message: "User verified", user: verify });
 };
+
+exports.resendverification = async (req, res) => {
+  let user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  let token = new Token({
+    token: crypto.randomBytes(16).toString("hex"),
+    user: user._id,
+  });
+
+  token = await token.save();
+  if (!token) {
+    return res.status(400).json({ message: "Something went wrong" });
+  }
+  // return res.status(200).json(token);
+  const url = `localhost:9000/user/verify/${token.token}`;
+  sendEmail({
+    from: "noreply@gmail.com",
+    to: req.body.email,
+    subject: "Resend Verification Mail",
+    text: url,
+    html: "<a><button>Click to Verify</button></a>",
+  });
+  return res.status(200).json(user);
+};
