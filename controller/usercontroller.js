@@ -2,6 +2,7 @@ const User = require("../model/UserModel");
 const crypto = require("crypto");
 const Token = require("../model/TokenModel");
 const sendEmail = require("../sendEmail");
+const UserModel = require("../model/UserModel");
 
 exports.register = async (req, res) => {
   //destructuring
@@ -100,5 +101,57 @@ exports.resendverification = async (req, res) => {
     text: url,
     html: "<a><button>Click to Verify</button></a>",
   });
-  return res.status(200).json(user);
+  return res.status(200).json({ user });
+};
+
+exports.forgetPassword = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email: email });
+
+  if (!user) {
+    return res.status(400).json({ message: "User not found" });
+  } else {
+    let token = new Token({
+      token: crypto.randomBytes(16).toString("hex"),
+      user: user._id,
+    });
+
+    token = await token.save();
+    if (!token) {
+      return res.status(400).json({ message: "Something went wrong" });
+    }
+    // return res.status(200).json(token);
+    const url = `localhost:9000/user/forgetpassword/${token.token}`;
+    sendEmail({
+      from: "noreply@gmail.com",
+      to: email,
+      subject: "Reset Password Mail",
+      text: url,
+      html: "<a><button>Click to reset your password</button></a>",
+    });
+    return res.status(200).json({ user });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { id } = req.params;
+  let token = token.findOne({ token: id });
+
+  if (!token) {
+    return res.status(400).json({ message: "Invalid token" });
+  }
+
+  let user = User.findOne({ user: token.user });
+  if (!user) {
+    return res.status(400).send({ message: "User not found" });
+  }
+
+  user.password = req.body.password;
+  user = await user.save();
+
+  if (!user) {
+    return res.status(400).send({ message: "Something went wrong" });
+  }
+
+  return res.status(200).send({ message: "Password Changed", user });
 };
